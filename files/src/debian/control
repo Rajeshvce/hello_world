@@ -1,0 +1,13 @@
+Source: hello-world
+Section: misc
+Priority: optional
+Maintainer: Baurzhan Ismagulov <ibr@radix50.net>
+Build-Depends: debhelper (>= 9), libhello-dev, docbook-to-man
+Standards-Version: 3.9.5
+Homepage: https://github.com/ilbers/hello
+
+Package: hello-isar
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Sample application
+ Sample application that can be used as a skeleton
