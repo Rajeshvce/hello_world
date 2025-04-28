@@ -263,7 +263,7 @@ nvme0n1
   root@orin-nano:~# swupdate -i development-image-industrial-os-orin-nano.swu
   ```
 * Verify system is booted from system_b (/dev/nvme0n1p5) partition:
-  ```
+```
   root@orin-nano:~# bg_printenv
 
 ----------------------------
