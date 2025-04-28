@@ -2,7 +2,7 @@
 
 * This document provides details on how to test the SWUpdate feature for apollon
 
-Note: by default, SWUpdate feature is enabled
+**Note:** by default, SWUpdate feature is enabled
 
 ## Building and Storing the artifacts
 
