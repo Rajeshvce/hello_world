@@ -175,3 +175,189 @@ nvme0n1
 ```
 root@orin-nano:~# swupdate -i development-image-industrial-os-orin-nano.swu
 ```
+* After successful SWUpdate and reboot, check the bootloader ustate:
+```
+root@orin-nano:~# bg_printenv
+
+----------------------------
+ Config Partition #0 Values:
+in_progress:      no
+revision:         4
+kernel:           C:BOOT0:linux.efi
+kernelargs:
+watchdog timeout: 0 seconds
+ustate:           2 (TESTING)
+
+user variables:
+
+
+
+----------------------------
+ Config Partition #1 Values:
+in_progress:      no
+revision:         3
+kernel:           C:BOOT1:linux.efi
+kernelargs:
+watchdog timeout: 0 seconds
+ustate:           0 (OK)
+
+user variables:
+```
+**Note:** Note: Verify Partition #0 ustate is 2 (TESTING) and revision incremented to 4.
+* To confirm the successful completion of the SWUpdate, execute the command below and verify that the bootloader ustate is now 0 (OK).
+```
+root@orin-nano:~# bg_setenv -c
+Environment update was successful.
+root@orin-nano:~# bg_printenv
+
+----------------------------
+ Config Partition #0 Values:
+in_progress:      no
+revision:         4
+kernel:           C:BOOT0:linux.efi
+kernelargs:
+watchdog timeout: 0 seconds
+ustate:           0 (OK)
+
+user variables:
+
+
+
+----------------------------
+ Config Partition #1 Values:
+in_progress:      no
+revision:         3
+kernel:           C:BOOT1:linux.efi
+kernelargs:
+watchdog timeout: 0 seconds
+ustate:           0 (OK)
+
+user variables:
+```
+* Verify system is booted from system_a (/dev/nvme0n1p4) partition.
+```
+root@orin-nano:~# lsblk -f
+NAME        FSTYPE FSVER LABEL  UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+loop0
+zram0                                                                               [SWAP]
+zram1                                                                               [SWAP]
+zram2                                                                               [SWAP]
+zram3                                                                               [SWAP]
+zram4                                                                               [SWAP]
+zram5                                                                               [SWAP]
+nvme0n1
+├─nvme0n1p1 vfat   FAT16 efi    4321-DCBA
+├─nvme0n1p2 vfat   FAT32 BOOT0  4321-DCBB
+├─nvme0n1p3 vfat   FAT32 BOOT1  4321-DCBC
+├─nvme0n1p4 ext4   1.0          00000000-0000-0000-0000-000065e5e543   10.8G    40% /
+├─nvme0n1p5 ext4   1.0          00000000-0000-0000-0000-000065e5e543
+├─nvme0n1p6 ext4   1.0   config e0cbc70f-c0c1-437a-abaf-c34ee5e3d950  906.2M     0% /config
+└─nvme0n1p7 ext4   1.0   data   55ec00b7-a9d6-47ee-ac6e-bbb0211e30e4  196.1G     0% /data
+```
+
+### Scenario 3: SWUpdate: Rollback
+* Copy the update-image.swu file from swu-artifacts/development-image-industrial-os-orin-nano.swu to device via SSH or USB
+* Apply swupdate and reboot
+**Note:** Currently system is booted from system_a (/dev/nvme0n1p4). Applying the SWUpdate will be applied to system_b (/dev/nvme0n1p5)
+  ```
+  root@orin-nano:~# swupdate -i development-image-industrial-os-orin-nano.swu
+  ```
+* Verify system is booted from system_b (/dev/nvme0n1p5) partition:
+  ```
+  root@orin-nano:~# bg_printenv
+
+----------------------------
+ Config Partition #0 Values:
+in_progress:      no
+revision:         4
+kernel:           C:BOOT0:linux.efi
+kernelargs:
+watchdog timeout: 0 seconds
+ustate:           0 (OK)
+
+user variables:
+
+
+
+----------------------------
+ Config Partition #1 Values:
+in_progress:      no
+revision:         5
+kernel:           C:BOOT1:linux.efi
+kernelargs:
+watchdog timeout: 0 seconds
+ustate:           2 (TESTING)
+
+user variables:
+root@orin-nano:~# lsblk -f
+NAME        FSTYPE FSVER LABEL  UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+loop0
+zram0                                                                               [SWAP]
+zram1                                                                               [SWAP]
+zram2                                                                               [SWAP]
+zram3                                                                               [SWAP]
+zram4                                                                               [SWAP]
+zram5                                                                               [SWAP]
+nvme0n1
+├─nvme0n1p1 vfat   FAT16 efi    4321-DCBA
+├─nvme0n1p2 vfat   FAT32 BOOT0  4321-DCBB
+├─nvme0n1p3 vfat   FAT32 BOOT1  4321-DCBC
+├─nvme0n1p4 ext4   1.0          00000000-0000-0000-0000-000065e5e543
+├─nvme0n1p5 ext4   1.0          00000000-0000-0000-0000-000065e5e543   10.8G    40% /
+├─nvme0n1p6 ext4   1.0   config e0cbc70f-c0c1-437a-abaf-c34ee5e3d950  906.2M     0% /config
+└─nvme0n1p7 ext4   1.0   data   55ec00b7-a9d6-47ee-ac6e-bbb0211e30e4  196.1G     0% /data
+```
+**Note:** Verify Partition #1 ustate is 2 (TESTING) and revision incremented.
+
+*  To rollback the update, reboot the system without updating the bootloader environment:
+```
+root@orin-nano:~# reboot
+```
+* To verify the system rollback, confirm that the system has booted from /dev/nvme0n1p4 (system_a) and that the ustate of Partition #1 is 3 (FAILED):
+```
+root@orin-nano:~# bg_printenv
+
+----------------------------
+ Config Partition #0 Values:
+in_progress:      no
+revision:         4
+kernel:           C:BOOT0:linux.efi
+kernelargs:
+watchdog timeout: 0 seconds
+ustate:           0 (OK)
+
+user variables:
+
+
+
+----------------------------
+ Config Partition #1 Values:
+in_progress:      no
+revision:         0
+kernel:           C:BOOT1:linux.efi
+kernelargs:
+watchdog timeout: 0 seconds
+ustate:           3 (FAILED)
+
+user variables:
+
+
+root@orin-nano:~# lsblk -f
+NAME        FSTYPE FSVER LABEL  UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+loop0
+zram0                                                                               [SWAP]
+zram1                                                                               [SWAP]
+zram2                                                                               [SWAP]
+zram3                                                                               [SWAP]
+zram4                                                                               [SWAP]
+zram5                                                                               [SWAP]
+nvme0n1
+├─nvme0n1p1 vfat   FAT16 efi    4321-DCBA
+├─nvme0n1p2 vfat   FAT32 BOOT0  4321-DCBB
+├─nvme0n1p3 vfat   FAT32 BOOT1  4321-DCBC
+├─nvme0n1p4 ext4   1.0          00000000-0000-0000-0000-000065e5e543    7.4G    57% /
+├─nvme0n1p5 ext4   1.0          00000000-0000-0000-0000-000065e5e543
+├─nvme0n1p6 ext4   1.0   config e0cbc70f-c0c1-437a-abaf-c34ee5e3d950  906.2M     0% /config
+└─nvme0n1p7 ext4   1.0   data   55ec00b7-a9d6-47ee-ac6e-bbb0211e30e4  196.1G     0% /data
+```
+
